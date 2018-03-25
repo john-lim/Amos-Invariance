@@ -6,6 +6,7 @@ Imports AmosEngineLib.AmosEngine.TMatrixID
 Imports MiscAmosTypes
 Imports MiscAmosTypes.cDatabaseFormat
 Imports System.Xml
+Imports System.Text.RegularExpressions
 
 <System.ComponentModel.Composition.Export(GetType(Amos.IPlugin))>
 Public Class CustomCode
@@ -33,7 +34,6 @@ Public Class CustomCode
         'Get the cmin and df for the unconstrained model.
         Dim unconstrainedEstimates As Estimates = GetEstimates()
 
-        Exit Function
         'Constrain all the relevant paths
         NamePaths()
 
@@ -92,149 +92,151 @@ Public Class CustomCode
         debug.PrintX("<h2>Local Tests</h2>")
         debug.PrintX("<table><tr><th>Path Name</th><th>" + names(0) + " Beta</th><th>" + names(1) + " Beta</th><th>Difference in Betas</th><th>P-Value for Difference</th><th>Interpretation</th></tr>")
         For x = 1 To numRegression 'Iterate through regression weights tables.
-            debug.PrintX("<tr><td>" + MatrixName(tableRegression1, x, 2) + " &#8594 " + MatrixName(tableRegression1, x, 0) + ".") 'Name of path
-            For y = 0 To 3
-                If y = 0 Then 'Check significance of beta.
-                    If MatrixName(tableRegression1, x, 6) = "***" Then
-                        significance = "***"
-                    ElseIf MatrixElement(tableRegression1, x, 6) < 0.01 Then
-                        significance = "**"
-                    ElseIf MatrixElement(tableRegression1, x, 6) < 0.05 Then
-                        significance = "*"
-                    ElseIf MatrixElement(tableRegression1, x, 6) < 0.1 Then
-                        significance = "&#8224;"
-                    Else
-                        significance = ""
-                    End If
-
-                    'Group 1 beta
-                    debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + significance + "</td>")
-
-                ElseIf y = 1 Then 'Check significance of beta.
-                    If MatrixName(tableRegression2, x, 6) = "***" Then
-                        significance = "***"
-                    ElseIf MatrixElement(tableRegression2, x, 6) < 0.01 Then
-                        significance = "**"
-                    ElseIf MatrixElement(tableRegression2, x, 6) < 0.05 Then
-                        significance = "*"
-                    ElseIf MatrixElement(tableRegression2, x, 6) < 0.1 Then
-                        significance = "&#8224;"
-                    Else
-                        significance = ""
-                    End If
-
-                    'Group 2 beta
-                    debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + significance + "</td>")
-                Else
-                    'Difference in betas and chi-squared difference test.
-                    debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + "</td>")
-                End If
-            Next
-
-            'Local tests interpretations
-            debug.PrintX("<td>")
-
-            If (MatrixName(tableRegression1, x, 6) = "***" Or MatrixElement(tableRegression1, x, 6) < 0.1) And (MatrixName(tableRegression2, x, 6) = "***" Or MatrixElement(tableRegression2, x, 6) < 0.1) Then 'Both betas significant
-                If estimatesMatrix(0, x) > 0 And estimatesMatrix(1, x) > 0 Then 'Both betas positive
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        If estimatesMatrix(0, x) > estimatesMatrix(1, x) Then 'First beta is greater
-                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
-                        ElseIf estimatesMatrix(0, x) < estimatesMatrix(1, x) Then 'Second beta is greater
-                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+            If estimatesMatrix(0, x) <> 0 Then
+                debug.PrintX("<tr><td>" + MatrixName(tableRegression1, x, 2) + " &#8594 " + MatrixName(tableRegression1, x, 0) + ".") 'Name of path
+                For y = 0 To 3
+                    If y = 0 Then 'Check significance of beta.
+                        If MatrixName(tableRegression1, x, 6) = "***" Then
+                            significance = "***"
+                        ElseIf MatrixElement(tableRegression1, x, 6) < 0.01 Then
+                            significance = "**"
+                        ElseIf MatrixElement(tableRegression1, x, 6) < 0.05 Then
+                            significance = "*"
+                        ElseIf MatrixElement(tableRegression1, x, 6) < 0.1 Then
+                            significance = "&#8224;"
                         Else
-                            debug.PrintX("Well, this was unexpected... what do you think is happening here?</td>")
+                            significance = ""
                         End If
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("There is no difference.")
+
+                        'Group 1 beta
+                        debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + significance + "</td>")
+
+                    ElseIf y = 1 Then 'Check significance of beta.
+                        If MatrixName(tableRegression2, x, 6) = "***" Then
+                            significance = "***"
+                        ElseIf MatrixElement(tableRegression2, x, 6) < 0.01 Then
+                            significance = "**"
+                        ElseIf MatrixElement(tableRegression2, x, 6) < 0.05 Then
+                            significance = "*"
+                        ElseIf MatrixElement(tableRegression2, x, 6) < 0.1 Then
+                            significance = "&#8224;"
+                        Else
+                            significance = ""
+                        End If
+
+                        'Group 2 beta
+                        debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + significance + "</td>")
                     Else
-                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        'Difference in betas and chi-squared difference test.
+                        debug.PrintX("<td align=center>" + estimatesMatrix(y, x).ToString("#0.000") + "</td>")
                     End If
-                ElseIf estimatesMatrix(0, x) < 0 And estimatesMatrix(1, x) < 0 Then 'Both betas negative
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        If estimatesMatrix(0, x) < estimatesMatrix(1, x) Then 'First beta is lower
-                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
-                        ElseIf estimatesMatrix(0, x) > estimatesMatrix(1, x) Then 'Second beta is lower
-                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+                Next
+
+                'Local tests interpretations
+                debug.PrintX("<td>")
+
+                If (MatrixName(tableRegression1, x, 6) = "***" Or MatrixElement(tableRegression1, x, 6) < 0.1) And (MatrixName(tableRegression2, x, 6) = "***" Or MatrixElement(tableRegression2, x, 6) < 0.1) Then 'Both betas significant
+                    If estimatesMatrix(0, x) > 0 And estimatesMatrix(1, x) > 0 Then 'Both betas positive
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            If estimatesMatrix(0, x) > estimatesMatrix(1, x) Then 'First beta is greater
+                                debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
+                            ElseIf estimatesMatrix(0, x) < estimatesMatrix(1, x) Then 'Second beta is greater
+                                debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+                            Else
+                                debug.PrintX("Well, this was unexpected... what do you think is happening here?</td>")
+                            End If
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("There is no difference.")
                         Else
                             debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                         End If
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("There is no difference.")
+                    ElseIf estimatesMatrix(0, x) < 0 And estimatesMatrix(1, x) < 0 Then 'Both betas negative
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            If estimatesMatrix(0, x) < estimatesMatrix(1, x) Then 'First beta is lower
+                                debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
+                            ElseIf estimatesMatrix(0, x) > estimatesMatrix(1, x) Then 'Second beta is lower
+                                debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+                            Else
+                                debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                            End If
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("There is no difference.")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
+                    ElseIf estimatesMatrix(0, x) > 0 And estimatesMatrix(1, x) < 0 Then 'First beta is positive
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is positive for " + names(0) + " and negative for " + names(1) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is positive for " + names(0) + " and negative for " + names(1) + ", but there is no statistically significant difference.")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
+                    ElseIf estimatesMatrix(0, x) < 0 And estimatesMatrix(1, x) > 0 Then 'First beta is negative
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is negative for " + names(0) + " and positive for " + names(1) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is negative for " + names(0) + " and positive for " + names(1) + ", but there is no statistically significant difference.")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
                     Else
                         debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                     End If
-                ElseIf estimatesMatrix(0, x) > 0 And estimatesMatrix(1, x) < 0 Then 'First beta is positive
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is positive for " + names(0) + " and negative for " + names(1) + ".")
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is positive for " + names(0) + " and negative for " + names(1) + ", but there is no statistically significant difference.")
+                ElseIf (MatrixName(tableRegression1, x, 6) = "***" Or MatrixElement(tableRegression1, x, 6) < 0.1) And (MatrixName(tableRegression2, x, 6) <> "***" Or MatrixElement(tableRegression2, x, 6) > 0.1) Then 'First significant
+                    If estimatesMatrix(0, x) > 0 Then 'First beta is positive
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(0) + ".")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
+                    ElseIf estimatesMatrix(0, x) < 0 Then 'First beta is negative
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(0) + ".")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
                     Else
                         debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                     End If
-                ElseIf estimatesMatrix(0, x) < 0 And estimatesMatrix(1, x) > 0 Then 'First beta is negative
+                ElseIf (MatrixName(tableRegression1, x, 6) <> "***" Or MatrixElement(tableRegression1, x, 6) > 0.1) And (MatrixName(tableRegression2, x, 6) = "***" Or MatrixElement(tableRegression2, x, 6) < 0.1) Then 'Second significant
+                    If estimatesMatrix(1, x) > 0 Then 'Second beta is positive
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(1) + ".")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
+                    ElseIf estimatesMatrix(1, x) < 0 Then 'Second beta is negative
+                        If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
+                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
+                        ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
+                            debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(1) + ".")
+                        Else
+                            debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                        End If
+                    Else
+                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
+                    End If
+                ElseIf (MatrixName(tableRegression1, x, 6) <> "***" Or MatrixElement(tableRegression1, x, 6) > 0.1) And (MatrixName(tableRegression2, x, 6) <> "***" Or MatrixElement(tableRegression2, x, 6) > 0.1) Then 'Both not significant
                     If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is negative for " + names(0) + " and positive for " + names(1) + ".")
+                        debug.PrintX("While there is a difference, that difference cannot be identified because the relationship is essentially not different from zero for both groups.")
                     ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is negative for " + names(0) + " and positive for " + names(1) + ", but there is no statistically significant difference.")
+                        debug.PrintX("There is no difference")
                     Else
                         debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                     End If
                 Else
                     debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                 End If
-            ElseIf (MatrixName(tableRegression1, x, 6) = "***" Or MatrixElement(tableRegression1, x, 6) < 0.1) And (MatrixName(tableRegression2, x, 6) <> "***" Or MatrixElement(tableRegression2, x, 6) > 0.1) Then 'First significant
-                If estimatesMatrix(0, x) > 0 Then 'First beta is positive
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(0) + ".")
-                    Else
-                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                    End If
-                ElseIf estimatesMatrix(0, x) < 0 Then 'First beta is negative
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(0) + ".")
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(0) + ".")
-                    Else
-                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                    End If
-                Else
-                    debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                End If
-            ElseIf (MatrixName(tableRegression1, x, 6) <> "***" Or MatrixElement(tableRegression1, x, 6) > 0.1) And (MatrixName(tableRegression2, x, 6) = "***" Or MatrixElement(tableRegression2, x, 6) < 0.1) Then 'Second significant
-                If estimatesMatrix(1, x) > 0 Then 'Second beta is positive
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The positive relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(1) + ".")
-                    Else
-                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                    End If
-                ElseIf estimatesMatrix(1, x) < 0 Then 'Second beta is negative
-                    If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                        debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is stronger for " + names(1) + ".")
-                    ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                        debug.PrintX("The negative relationship between " + MatrixName(tableRegression1, x, 0) + " and " + MatrixName(tableRegression1, x, 2) + " is only significant for " + names(1) + ".")
-                    Else
-                        debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                    End If
-                Else
-                    debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                End If
-            ElseIf (MatrixName(tableRegression1, x, 6) <> "***" Or MatrixElement(tableRegression1, x, 6) > 0.1) And (MatrixName(tableRegression2, x, 6) <> "***" Or MatrixElement(tableRegression2, x, 6) > 0.1) Then 'Both not significant
-                If estimatesMatrix(3, x) < 0.1 Then 'Difference in betas is significant
-                    debug.PrintX("While there is a difference, that difference cannot be identified because the relationship is essentially not different from zero for both groups.")
-                ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
-                    debug.PrintX("There is no difference")
-                Else
-                    debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-                End If
-            Else
-                debug.PrintX("Well, this was unexpected... what do you think is happening here?")
-            End If
 
-            debug.PrintX("</td></tr>")
+                debug.PrintX("</td></tr>")
+            End If
         Next
         debug.PrintX("</table><hr/>")
 
@@ -272,14 +274,13 @@ Public Class CustomCode
                     If (variable.Variable1.IsObservedVariable And variable.Variable2.IsObservedVariable) Or (variable.Variable1.IsLatentVariable And variable.Variable2.IsLatentVariable) Then
                         If variable.Variable1.NameOrCaption = MatrixName(tableGroup1, x, 2) And variable.Variable2.NameOrCaption = MatrixName(tableGroup1, x, 0) Then 'Check if name of connected variables matches regression table.
                             variable.Value1 = variable.Variable1.NameOrCaption + "_" + variable.Variable2.NameOrCaption 'Constrain model with path name
+                            Dim localEstimates As Estimates = GetEstimates()
+                            estimatesMatrix(0, x) = MatrixElement(tableGroup1, x, 3) 'Group 1 beta
+                            estimatesMatrix(1, x) = MatrixElement(tableGroup2, x, 3) 'Group 2 beta
+                            estimatesMatrix(2, x) = MatrixElement(tableGroup1, x, 3) - MatrixElement(tableGroup2, x, 3) 'Difference in betas
+                            estimatesMatrix(3, x) = AmosEngine.ChiSquareProbability(Math.Abs(unconstrainedEstimates.Cmin - localEstimates.Cmin), Math.Abs(unconstrainedEstimates.Df - localEstimates.Df)) 'Chi-squared difference test.
+                            ClearPaths() 'Rest names of all paths.
                         End If
-                        variable.Value1 = variable.Variable1.NameOrCaption + "_" + variable.Variable2.NameOrCaption 'Change path to names of the connected variables.
-                        Dim localEstimates As Estimates = GetEstimates()
-                        estimatesMatrix(0, x) = MatrixElement(tableGroup1, x, 3) 'Group 1 beta
-                        estimatesMatrix(1, x) = MatrixElement(tableGroup2, x, 3) 'Group 2 beta
-                        estimatesMatrix(2, x) = MatrixElement(tableGroup1, x, 3) - MatrixElement(tableGroup2, x, 3) 'Difference in betas
-                        estimatesMatrix(3, x) = AmosEngine.ChiSquareProbability(Math.Abs(unconstrainedEstimates.Cmin - localEstimates.Cmin), Math.Abs(unconstrainedEstimates.Df - localEstimates.Df)) 'Chi-squared difference test.
-                        ClearPaths() 'Rest names of all paths.
                     End If
                 End If
             Next
@@ -308,24 +309,24 @@ Public Class CustomCode
     End Function
 
     'Gets the cmin and the df for the given model condition.
-    Public Function GetEstimates() As Estimates
+    Function GetEstimates() As Estimates
 
         pd.AnalyzeCalculateEstimates()
-        Dim Sem As New AmosEngineLib.AmosEngine
+
+        'Properties
         Dim baseEstimates As Estimates
+        Dim modelNotes As XmlElement = GetXML("body/div/div[@ntype='models']/div[@ntype='model'][position() = 1]/div[@ntype='modelnotes']/div[@ntype='result']")
 
-        pd.SpecifyModel(Sem)
-        Sem.FitModel()
-
-        baseEstimates.Cmin = Sem.Cmin
-        baseEstimates.Df = Sem.Df
-
-        'Cmin is different from Df
-
-        MsgBox(Sem.Cmin)
-        MsgBox(Sem.Df)
-
-        Sem.Dispose()
+        'Use regex to extract the chi-square and df from the result
+        Dim result As String = modelNotes.InnerText
+        Dim myRegex As Match = Regex.Match(result, "\d+(\.\d{1,3})?", RegexOptions.IgnoreCase)
+        If myRegex.Success Then
+            baseEstimates.Cmin = Convert.ToDouble(Convert.ToString(myRegex.Value))
+            baseEstimates.Df = Convert.ToDouble(Convert.ToString(myRegex.NextMatch))
+        Else
+            MsgBox(modelNotes.InnerText)
+            Exit Function
+        End If
 
         GetEstimates = baseEstimates
 
@@ -411,6 +412,7 @@ Public Class CustomCode
                 End If
             End If
         Next
+
     End Sub
 
 End Class

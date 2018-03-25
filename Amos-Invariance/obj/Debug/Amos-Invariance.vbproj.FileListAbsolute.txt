@@ -1,0 +1,4 @@
+C:\Users\johnh\AppData\Local\AmosDevelopment\Amos\25\Plugins\Amos-Invariance.dll
+C:\Users\johnh\AppData\Local\AmosDevelopment\Amos\25\Plugins\Amos-Invariance.pdb
+C:\Users\johnh\Amos\Amos-Invariance\Amos-Invariance\obj\Debug\Amos-Invariance.dll
+C:\Users\johnh\Amos\Amos-Invariance\Amos-Invariance\obj\Debug\Amos-Invariance.pdb
