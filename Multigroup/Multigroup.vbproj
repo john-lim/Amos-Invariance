@@ -8,7 +8,7 @@
     <ProjectType>Local</ProjectType>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7A81177D-66F2-4417-AA96-47140BEECF58}</ProjectGuid>
+    <ProjectGuid>{27B3210F-7DA7-454D-8E3D-81FC36159433}</ProjectGuid>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>
@@ -33,8 +33,8 @@
     <OptionCompare>Binary</OptionCompare>
     <OptionExplicit>On</OptionExplicit>
     <OptionStrict>Off</OptionStrict>
-    <RootNamespace>Amos_Invariance</RootNamespace>
-    <StartupObject>Amos_Invariance.%28None%29</StartupObject>
+    <RootNamespace>Multigroup</RootNamespace>
+    <StartupObject>Multigroup.%28None%29</StartupObject>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <MyType>Windows</MyType>
@@ -200,7 +200,9 @@
     <Compile Include="AssemblyInfo.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Module.vb" />
+    <Compile Include="Module1.vb">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

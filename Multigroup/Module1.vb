@@ -13,7 +13,7 @@ Public Class CustomCode
     Implements IPlugin
 
     Public Function Name() As String Implements IPlugin.Name
-        Return "Invariance"
+        Return "Multigroup"
     End Function
 
     Public Function Description() As String Implements IPlugin.Description
@@ -51,13 +51,13 @@ Public Class CustomCode
 
         pd.AnalyzeCalculateEstimates() 'DO NOT REMOVE, resets the estimates table to the unconstrained output.
 
-        If (System.IO.File.Exists("Invariance.html")) Then 'Check if output file already exists.
-            System.IO.File.Delete("Invariance.html")
+        If (System.IO.File.Exists("Multigroup.html")) Then 'Check if output file already exists.
+            System.IO.File.Delete("Multigroup.html")
         End If
 
         'Set up the listener to output the debugger.
         Dim debug As New AmosDebug.AmosDebug
-        Dim resultWriter As New TextWriterTraceListener("Invariance.html")
+        Dim resultWriter As New TextWriterTraceListener("Multigroup.html")
         Trace.Listeners.Add(resultWriter)
 
         'Chi-squared difference for global test.
