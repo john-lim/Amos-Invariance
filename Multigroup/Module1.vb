@@ -7,6 +7,7 @@ Imports MiscAmosTypes
 Imports MiscAmosTypes.cDatabaseFormat
 Imports System.Xml
 Imports System.Text.RegularExpressions
+Imports System.Collections.Generic
 
 <System.ComponentModel.Composition.Export(GetType(Amos.IPlugin))>
 Public Class CustomCode
@@ -64,6 +65,7 @@ Public Class CustomCode
         Dim chiDifference As Double = AmosEngine.ChiSquareProbability(Math.Abs(unconstrainedEstimates.Cmin - constrainedEstimates.Cmin), Math.Abs(unconstrainedEstimates.Df - constrainedEstimates.Df))
         Dim names() As String = GroupNames() 'Names of the groups in the model
         Dim significance As String = "" 'Temp variable for significance tests.
+        Dim tablerows As New Dictionary(Of String, Boolean)
 
         'Regression tables of both groups in the model.
         Dim tableRegression1 As XmlElement = GetXML("body/div/div[@ntype='models']/div[@ntype='model'][position() = 1]/div[@ntype='group'][position() = 1]/div[@ntype='estimates']/div[@ntype='scalars']/div[@nodecaption='Regression Weights:']/table/tbody")
@@ -71,7 +73,7 @@ Public Class CustomCode
         Dim numRegression As Integer = GetNodeCount(tableRegression1) 'Number of rows in the regression weights table.
 
         'Html DOC
-        debug.PrintX("<html><body><h1>Invariance Tests</h1><hr/>")
+        debug.PrintX("<html><body><h1>Multigroup Tests</h1><hr/>")
 
         'Global test
         debug.PrintX("<h2>Global Test</h2>")
@@ -92,8 +94,12 @@ Public Class CustomCode
         debug.PrintX("<h2>Local Tests</h2>")
         debug.PrintX("<table><tr><th>Path Name</th><th>" + names(0) + " Beta</th><th>" + names(1) + " Beta</th><th>Difference in Betas</th><th>P-Value for Difference</th><th>Interpretation</th></tr>")
         For x = 1 To numRegression 'Iterate through regression weights tables.
+            Dim check1 = False
+            Dim check2 = False
+            Dim check3 = False
             If estimatesMatrix(0, x) <> 0 Then
-                debug.PrintX("<tr><td>" + MatrixName(tableRegression1, x, 2) + " &#8594 " + MatrixName(tableRegression1, x, 0) + ".") 'Name of path
+                Dim id As String = "id=""row" + CStr(x) + """"
+                debug.PrintX("<tr " + id + "><td>" + MatrixName(tableRegression1, x, 2) + " &#8594 " + MatrixName(tableRegression1, x, 0) + ".") 'Name of path
                 For y = 0 To 3
                     If y = 0 Then 'Check significance of beta.
                         If MatrixName(tableRegression1, x, 6) = "***" Then
@@ -106,6 +112,7 @@ Public Class CustomCode
                             significance = "&#8224;"
                         Else
                             significance = ""
+                            check1 = True
                         End If
 
                         'Group 1 beta
@@ -122,6 +129,7 @@ Public Class CustomCode
                             significance = "&#8224;"
                         Else
                             significance = ""
+                            check2 = True
                         End If
 
                         'Group 2 beta
@@ -147,6 +155,7 @@ Public Class CustomCode
                             End If
                         ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
                             debug.PrintX("There is no difference.")
+                            check3 = True
                         Else
                             debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                         End If
@@ -161,6 +170,7 @@ Public Class CustomCode
                             End If
                         ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
                             debug.PrintX("There is no difference.")
+                            check3 = True
                         Else
                             debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                         End If
@@ -228,6 +238,7 @@ Public Class CustomCode
                         debug.PrintX("While there is a difference, that difference cannot be identified because the relationship is essentially not different from zero for both groups.")
                     ElseIf estimatesMatrix(3, x) > 0.1 Then 'Difference in betas is not significant
                         debug.PrintX("There is no difference")
+                        check3 = True
                     Else
                         debug.PrintX("Well, this was unexpected... what do you think is happening here?")
                     End If
@@ -237,6 +248,12 @@ Public Class CustomCode
 
                 debug.PrintX("</td></tr>")
             End If
+            If check1 = True And check2 = True And check3 = True Then
+                tablerows.Add("row" + CStr(x), True)
+            Else
+                tablerows.Add("row" + CStr(x), False)
+            End If
+
         Next
         debug.PrintX("</table><hr/>")
 
@@ -246,14 +263,20 @@ Public Class CustomCode
         debug.PrintX("Gaskin, J. & Lim, J. (2018), ""Multigroup Analysis"", AMOS Plugin. <a href=""http://statwiki.kolobkreations.com"">Gaskination's StatWiki</a>.</p>")
 
         'Write Style And close
-        debug.PrintX("<style>table{border:1px solid black;border-collapse:collapse;}td{border:1px solid black;padding:5px;}th{text-weight:bold;padding:10px;border: 1px solid black;}</style>")
+        debug.PrintX("<style>table{border:1px solid black;border-collapse:collapse;}td{border:1px solid black;padding:5px;}th{text-weight:bold;padding:10px;border: 1px solid black;}")
+        For Each row In tablerows
+            If row.Value = True Then
+                debug.PrintX("#" + row.Key + "{background-color:#404040;}")
+            End If
+        Next
+        debug.PrintX("</style>")
         debug.PrintX("</body></html>")
 
         Trace.Flush()
         Trace.Listeners.Remove(resultWriter)
         resultWriter.Close()
         resultWriter.Dispose()
-        Process.Start("Invariance.html")
+        Process.Start("Multigroup.html")
     End Sub
 
     'Analyze estimates for every path constrained in the model.

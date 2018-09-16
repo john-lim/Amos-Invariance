@@ -1,4 +1,4 @@
-Amos-Invariance
+Amos-Multigroup
 ============================
 
 This AMOS plugin simplifies the process in a multigroup analysis to check if there is a significant difference between groups in a model.
