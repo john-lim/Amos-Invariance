@@ -1,4 +1,0 @@
-C:\Users\johnh\AppData\Local\AmosDevelopment\Amos\25\Plugins\Multigroup.dll
-C:\Users\johnh\AppData\Local\AmosDevelopment\Amos\25\Plugins\Multigroup.pdb
-C:\Users\johnh\Desktop\Research\Amos-Multigroup\Multigroup\obj\Debug\Multigroup.dll
-C:\Users\johnh\Desktop\Research\Amos-Multigroup\Multigroup\obj\Debug\Multigroup.pdb
