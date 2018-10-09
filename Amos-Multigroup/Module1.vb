@@ -80,6 +80,7 @@ Public Class CustomCode
         debug.PrintX("<table><tr><td></td><th>X<sup>2</sup></th><th>DF</th></tr>")
         debug.PrintX("<tr><td>Unconstrained</td><td align=center>" + unconstrainedEstimates.Cmin.ToString("#0.000") + "</td><td align=center>" + unconstrainedEstimates.Df.ToString + "</td></tr>")
         debug.PrintX("<tr><td>Constrained</td><td align=center>" + constrainedEstimates.Cmin.ToString("#0.000") + "</td><td align=center>" + constrainedEstimates.Df.ToString + "</td></tr>")
+        debug.PrintX("<tr><td>Difference</td><td align=center>" + Math.Abs((constrainedEstimates.Cmin - unconstrainedEstimates.Cmin)).ToString("#0.000") + "</td><td align=center>" + Math.Abs((constrainedEstimates.Df - unconstrainedEstimates.Df)).ToString + "</td></tr>")
         debug.PrintX("<tr><td>P-Value</td><td colspan=2 align=center>" + chiDifference.ToString("#0.000") + "</td></tr>")
         debug.PrintX("</table>")
 
