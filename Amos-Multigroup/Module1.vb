@@ -267,7 +267,7 @@ Public Class CustomCode
         debug.PrintX("<style>table{border:1px solid black;border-collapse:collapse;}td{border:1px solid black;padding:5px;}th{text-weight:bold;padding:10px;border: 1px solid black;}")
         For Each row In tablerows
             If row.Value = True Then
-                debug.PrintX("#" + row.Key + "{background-color:#404040;}")
+                debug.PrintX("#" + row.Key + "{background-color:#B0B0B0;}")
             End If
         Next
         debug.PrintX("</style>")
